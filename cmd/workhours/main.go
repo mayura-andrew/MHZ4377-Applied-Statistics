@@ -34,6 +34,9 @@ func main() {
 	calculateMedian(workHours)
 	calculateMode(workHours)
 
+	// Calculate and display Variance and Standard Deviation
+	calculateVarianceAndStdDev(workHours)
+
 	// Summary
 	fmt.Println("═══════════════════════════════════════════════════════════")
 	fmt.Println("                    SUMMARY")
@@ -42,10 +45,12 @@ func main() {
 	mean := getMean(workHours)
 	median := getMedian(workHours)
 	modes := getModes(workHours)
+	variance := getVariance(workHours)
+	stdDev := getStdDev(workHours)
 
-	fmt.Printf("Mean:   %.2f hours\n", mean)
-	fmt.Printf("Median: %.1f hours\n", median)
-	fmt.Printf("Mode:   ")
+	fmt.Printf("Mean:               %.2f hours\n", mean)
+	fmt.Printf("Median:             %.1f hours\n", median)
+	fmt.Printf("Mode:               ")
 	for i, mode := range modes {
 		if i > 0 {
 			fmt.Print(", ")
@@ -53,6 +58,8 @@ func main() {
 		fmt.Printf("%d hours", mode)
 	}
 	fmt.Println()
+	fmt.Printf("Variance:           %.4f hours²\n", variance)
+	fmt.Printf("Standard Deviation: %.4f hours\n", stdDev)
 	fmt.Println("═══════════════════════════════════════════════════════════")
 }
 
@@ -245,6 +252,139 @@ func calculateMode(data []int) {
 	fmt.Println()
 }
 
+func calculateVarianceAndStdDev(data []int) {
+	fmt.Println("═══════════════════════════════════════════════════════════")
+	fmt.Println("     4. VARIANCE AND STANDARD DEVIATION (Variability)")
+	fmt.Println("═══════════════════════════════════════════════════════════")
+	fmt.Println()
+	fmt.Println("Variance and standard deviation measure how spread out the data is.")
+	fmt.Println("They tell us how much the work hours vary from the average.")
+	fmt.Println()
+
+	n := len(data)
+
+	// Calculate mean first
+	var sum int
+	for _, hours := range data {
+		sum += hours
+	}
+	mean := float64(sum) / float64(n)
+
+	// --- VARIANCE ---
+	fmt.Println("--- VARIANCE (σ²) ---")
+	fmt.Println()
+	fmt.Println("Variance measures the average squared distance from the mean.")
+	fmt.Println("Formula: σ² = Σ(xi - μ)² / n")
+	fmt.Println("         where xi = each value, μ = mean, n = number of values")
+	fmt.Println()
+
+	fmt.Printf("Step 1: We already know the mean (μ) = %.4f hours\n", mean)
+	fmt.Println()
+
+	fmt.Println("Step 2: Calculate (xi - μ)² for each employee's work hours:")
+	fmt.Println()
+	fmt.Println("        Employee | Hours | (Hours - Mean) | (Hours - Mean)²")
+	fmt.Println("        ---------|-------|----------------|----------------")
+
+	var sumSquaredDiff float64
+	for i, hours := range data {
+		diff := float64(hours) - mean
+		sqDiff := diff * diff
+		sumSquaredDiff += sqDiff
+
+		// Show first 10 and last 5 to keep output manageable
+		if i < 10 || i >= n-5 {
+			fmt.Printf("           %2d    |  %2d   |   %8.4f     |   %10.4f\n", i+1, hours, diff, sqDiff)
+		} else if i == 10 {
+			fmt.Println("          ...    |  ...  |      ...       |       ...")
+		}
+	}
+
+	fmt.Println()
+	fmt.Printf("Step 3: Sum all the squared differences\n")
+	fmt.Printf("        Σ(xi - μ)² = %.4f\n", sumSquaredDiff)
+	fmt.Println()
+
+	variance := sumSquaredDiff / float64(n)
+
+	fmt.Printf("Step 4: Divide by n to get the variance\n")
+	fmt.Printf("        Variance (σ²) = %.4f / %d = %.4f hours²\n", sumSquaredDiff, n, variance)
+	fmt.Println()
+	fmt.Printf("✓ Variance = %.4f hours²\n", variance)
+	fmt.Println()
+
+	// --- STANDARD DEVIATION ---
+	fmt.Println("--- STANDARD DEVIATION (σ) ---")
+	fmt.Println()
+	fmt.Println("Standard deviation is the square root of variance.")
+	fmt.Println("It's easier to interpret because it's in the same units as the data (hours).")
+	fmt.Println("Formula: σ = √(σ²)")
+	fmt.Println()
+
+	stdDev := 0.0
+	// Manual square root calculation visualization
+	fmt.Printf("Step 1: Take the square root of the variance\n")
+	fmt.Printf("        σ = √(%.4f)\n", variance)
+	fmt.Println()
+
+	// Show the calculation
+	stdDev = 1.0
+	for i := 0; i < 10; i++ {
+		stdDev = (stdDev + variance/stdDev) / 2.0
+	}
+
+	// Use actual square root for accuracy
+	import_math := func(x float64) float64 {
+		if x <= 0 {
+			return 0
+		}
+		// Newton's method for square root
+		guess := x / 2.0
+		for i := 0; i < 20; i++ {
+			guess = (guess + x/guess) / 2.0
+		}
+		return guess
+	}
+	stdDev = import_math(variance)
+
+	fmt.Printf("        σ = %.4f hours\n", stdDev)
+	fmt.Println()
+	fmt.Printf("✓ Standard Deviation = %.4f hours\n", stdDev)
+	fmt.Println()
+
+	// Interpretation
+	fmt.Println("--- INTERPRETATION ---")
+	fmt.Println()
+	fmt.Printf("Variance (σ²) = %.4f hours²\n", variance)
+	fmt.Printf("  - This measures the average squared deviation from the mean.\n")
+	fmt.Printf("  - The squared units make it less intuitive to interpret directly.\n")
+	fmt.Println()
+	fmt.Printf("Standard Deviation (σ) = %.4f hours\n", stdDev)
+	fmt.Printf("  - On average, work hours deviate from the mean by about %.2f hours.\n", stdDev)
+	fmt.Printf("  - This tells us the 'typical' distance from the average of %.2f hours.\n", mean)
+	fmt.Println()
+
+	// Context
+	fmt.Println("What does this mean?")
+	if stdDev < 2.0 {
+		fmt.Println("  - LOW variability: Work hours are very consistent across employees.")
+		fmt.Println("  - Most employees work very close to the average.")
+	} else if stdDev < 4.0 {
+		fmt.Println("  - MODERATE variability: There is some variation in work hours.")
+		fmt.Println("  - Most employees work within a reasonable range of the average.")
+	} else {
+		fmt.Println("  - HIGH variability: Work hours vary significantly across employees.")
+		fmt.Println("  - Employees' work schedules differ substantially.")
+	}
+	fmt.Println()
+
+	// Range interpretation
+	fmt.Printf("Approximately 68%% of employees work between %.2f and %.2f hours\n",
+		mean-stdDev, mean+stdDev)
+	fmt.Printf("(within 1 standard deviation of the mean).\n")
+	fmt.Println()
+}
+
 // Helper functions for summary
 func getMean(data []int) float64 {
 	var sum int
@@ -291,4 +431,36 @@ func getModes(data []int) []int {
 	}
 	sort.Ints(modes)
 	return modes
+}
+
+func getVariance(data []int) float64 {
+	n := len(data)
+	if n == 0 {
+		return 0
+	}
+
+	mean := getMean(data)
+	var sumSquaredDiff float64
+
+	for _, v := range data {
+		diff := float64(v) - mean
+		sumSquaredDiff += diff * diff
+	}
+
+	return sumSquaredDiff / float64(n)
+}
+
+func getStdDev(data []int) float64 {
+	variance := getVariance(data)
+
+	// Newton's method for square root
+	if variance <= 0 {
+		return 0
+	}
+
+	guess := variance / 2.0
+	for i := 0; i < 20; i++ {
+		guess = (guess + variance/guess) / 2.0
+	}
+	return guess
 }
